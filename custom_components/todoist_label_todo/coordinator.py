@@ -43,7 +43,9 @@ class TodoistLabelCoordinator(DataUpdateCoordinator[list[dict]]):
                 params={"filter": f"@{self.label}"},
             ) as resp:
                 resp.raise_for_status()
-                return await resp.json()
+                data = await resp.json()
+                _LOGGER.debug("Todoist tasks/by_filter raw response: %s", data)
+                return data if isinstance(data, list) else data.get("results", [])
         except aiohttp.ClientResponseError as err:
             raise UpdateFailed(
                 f"Todoist API error {err.status}: {err.message}"
@@ -88,5 +90,6 @@ async def fetch_labels(hass: HomeAssistant, api_token: str) -> list[str]:
         _LOGGER.debug("Todoist /labels response status: %s", resp.status)
         resp.raise_for_status()
         data = await resp.json()
-        _LOGGER.debug("Todoist /labels returned %d labels", len(data))
-        return [label["name"] for label in data]
+        _LOGGER.debug("Todoist /labels raw response: %s", data)
+        items = data if isinstance(data, list) else data.get("results", [])
+        return [label["name"] for label in items]
