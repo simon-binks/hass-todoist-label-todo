@@ -85,6 +85,8 @@ async def fetch_labels(hass: HomeAssistant, api_token: str) -> list[str]:
         f"{TODOIST_API_BASE}/labels",
         headers={"Authorization": f"Bearer {api_token}"},
     ) as resp:
+        _LOGGER.debug("Todoist /labels response status: %s", resp.status)
         resp.raise_for_status()
         data = await resp.json()
+        _LOGGER.debug("Todoist /labels returned %d labels", len(data))
         return [label["name"] for label in data]

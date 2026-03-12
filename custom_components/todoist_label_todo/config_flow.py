@@ -38,8 +38,13 @@ class TodoistLabelTodoConfigFlow(ConfigFlow, domain=DOMAIN):
             try:
                 labels = await fetch_labels(self.hass, api_token)
             except aiohttp.ClientResponseError as err:
+                _LOGGER.error("Todoist API error %s: %s", err.status, err.message)
                 errors["base"] = "invalid_auth" if err.status == 401 else "cannot_connect"
-            except aiohttp.ClientError:
+            except aiohttp.ClientError as err:
+                _LOGGER.error("Connection error reaching Todoist: %s", err)
+                errors["base"] = "cannot_connect"
+            except Exception as err:
+                _LOGGER.exception("Unexpected error fetching Todoist labels: %s", err)
                 errors["base"] = "cannot_connect"
             else:
                 if not labels:
