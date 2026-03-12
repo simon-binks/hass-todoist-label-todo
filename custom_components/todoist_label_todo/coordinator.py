@@ -38,9 +38,9 @@ class TodoistLabelCoordinator(DataUpdateCoordinator[list[dict]]):
         session = async_get_clientsession(self.hass)
         try:
             async with session.get(
-                f"{TODOIST_API_BASE}/tasks/by_filter",
+                f"{TODOIST_API_BASE}/tasks/filter",
                 headers=self._headers,
-                params={"filter": f"@{self.label}"},
+                params={"query": f"@{self.label}"},
             ) as resp:
                 resp.raise_for_status()
                 data = await resp.json()
