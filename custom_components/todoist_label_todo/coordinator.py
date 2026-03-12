@@ -79,6 +79,20 @@ class TodoistLabelCoordinator(DataUpdateCoordinator[list[dict]]):
             _LOGGER.error("Failed to reopen Todoist task %s: %s", task_id, err)
             raise
 
+    async def async_update_task(self, task_id: str, updates: dict) -> None:
+        """Update task fields (description, due date, etc.) in Todoist."""
+        session = async_get_clientsession(self.hass)
+        try:
+            async with session.post(
+                f"{TODOIST_API_BASE}/tasks/{task_id}",
+                headers=self._headers,
+                json=updates,
+            ) as resp:
+                resp.raise_for_status()
+        except aiohttp.ClientError as err:
+            _LOGGER.error("Failed to update Todoist task %s: %s", task_id, err)
+            raise
+
 
 async def fetch_labels(hass: HomeAssistant, api_token: str) -> list[str]:
     """Fetch all personal label names from Todoist. Used by config and options flows."""

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date, datetime
 
 from homeassistant.components.todo import (
     TodoItem,
@@ -20,6 +21,18 @@ from .coordinator import TodoistLabelCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
+def _parse_due(due: dict | None) -> date | datetime | None:
+    """Convert a Todoist due dict to a date or timezone-aware datetime."""
+    if not due:
+        return None
+    if dt_str := due.get("datetime"):
+        # e.g. "2024-01-15T09:00:00.000000Z" — normalise to +00:00 offset
+        return datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+    if d_str := due.get("date"):
+        return date.fromisoformat(d_str)
+    return None
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -35,7 +48,12 @@ async def async_setup_entry(
 class TodoistLabelTodoEntity(CoordinatorEntity[TodoistLabelCoordinator], TodoListEntity):
     """A todo list entity backed by a Todoist label."""
 
-    _attr_supported_features = TodoListEntityFeature.UPDATE_TODO_ITEM
+    _attr_supported_features = (
+        TodoListEntityFeature.UPDATE_TODO_ITEM
+        | TodoListEntityFeature.SET_DUE_DATE_ON_ITEM
+        | TodoListEntityFeature.SET_DUE_DATETIME_ON_ITEM
+        | TodoListEntityFeature.SET_DESCRIPTION_ON_ITEM
+    )
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: TodoistLabelCoordinator) -> None:
@@ -58,14 +76,31 @@ class TodoistLabelTodoEntity(CoordinatorEntity[TodoistLabelCoordinator], TodoLis
                     if task.get("is_completed")
                     else TodoItemStatus.NEEDS_ACTION
                 ),
+                description=task.get("description") or None,
+                due=_parse_due(task.get("due")),
             )
             for task in self.coordinator.data
         ]
 
     async def async_update_todo_item(self, item: TodoItem) -> None:
-        """Handle a status change on a todo item."""
+        """Handle a status, description, or due-date change on a todo item."""
+        # Status change
         if item.status == TodoItemStatus.COMPLETED:
             await self.coordinator.async_close_task(item.uid)
         elif item.status == TodoItemStatus.NEEDS_ACTION:
             await self.coordinator.async_reopen_task(item.uid)
+
+        # Field updates (only send fields that were explicitly provided)
+        updates: dict = {}
+        if item.description is not None:
+            updates["description"] = item.description
+        if item.due is not None:
+            if isinstance(item.due, datetime):
+                updates["due_datetime"] = item.due.isoformat()
+            else:
+                updates["due_date"] = item.due.isoformat()
+
+        if updates:
+            await self.coordinator.async_update_task(item.uid, updates)
+
         await self.coordinator.async_request_refresh()
