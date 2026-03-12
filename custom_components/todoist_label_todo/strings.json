@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Todoist API Token",
+        "description": "Enter your Todoist API token. Find it under Settings \u2192 Integrations \u2192 Developer in Todoist.",
+        "data": {
+          "api_token": "API Token"
+        }
+      },
+      "labels": {
+        "title": "Select Labels",
+        "description": "Choose which Todoist labels to sync as todo lists. Each label becomes a separate todo entity in Home Assistant.",
+        "data": {
+          "labels": "Labels"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API token. Please check and try again.",
+      "cannot_connect": "Unable to connect to Todoist. Please check your network and try again.",
+      "no_labels": "No labels found in your Todoist account. Please create at least one label first.",
+      "no_labels_selected": "Please select at least one label."
+    },
+    "abort": {
+      "already_configured": "Todoist Label Todo is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Update Labels",
+        "description": "Add or remove labels to sync as todo lists.",
+        "data": {
+          "labels": "Labels"
+        }
+      }
+    },
+    "error": {
+      "no_labels_selected": "Please select at least one label."
+    }
+  }
+}

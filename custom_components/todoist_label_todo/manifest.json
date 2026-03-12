@@ -1,0 +1,11 @@
+{
+  "domain": "todoist_label_todo",
+  "name": "Todoist Label Todo",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/simon-binks/hass-todoist-label-todo",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "version": "1.0.0"
+}
